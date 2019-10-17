@@ -1,24 +1,29 @@
-from __future__ import print_function   #Make sure this line is always at the top of the file.
+from __future__ import print_function  # Make sure this line is always at the top of the file.
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from email.mime.text import MIMEText
 import base64
+import pickle
+import os.path
+import config
+from prasePrice import Price
 
-class Gmail():
+
+class gmail():
     def __init__(self):
         self.email = config.EMAIL_ADDRESS
         self.password = config.PASSWORD
         self.carrier = '@txt.att.net'
         self.toNumber = config.PHONE_NUMBER + '{}'.format(self.carrier)
         self.SCOPES = config.SCOPES
-        self.create_message(self.email, self.toNumber, 'Test Email', self.createMsgTxt())
+        self.buildMessage(self.email, self.toNumber, 'Test Email', self.textMessage())
 
-    def createMsgTxt(self):
+    def textMessage(self):
         message = " Your stock is currently at the price of $" + str(Price().parsePrice())
         return message
 
-    def create_message(self, sender, to, subject, message_text):
+    def buildMessage(self, sender, to, subject, message_text):
         message = MIMEText(message_text)
         message['to'] = to
         message['from'] = sender
@@ -26,18 +31,18 @@ class Gmail():
 
         return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
 
-    def send_message(self, service, user_id, message):
-      # try:
-      message = (service.users().messages().send(userId=user_id, body=message).execute())
-      print('Message Id: %s' % message['id'])
-      return message
-      # except:
-      #     print('ERR')
+    def sendMessage(self, service, user_id, message):
+        try:
+            message = (service.users().messages().send(userId=user_id, body=message).execute())
+            print('Message Id: %s' % message['id'])
+            return message
+        except:
+            print("Message failed to sent :( ")
 
-    def authorization(self):
+    def getCreds(self):
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
-        # created automatically when the authorization flow completes for the first
+        # created automatically when the getCreds flow completes for the first
         # time.
         if os.path.exists('token.pickle'):
             with open('token.pickle', 'rb') as token:
@@ -57,4 +62,4 @@ class Gmail():
 
         return service
         # Call the Gmail API
-        #results = service.users().labels().list(userId='me').execute()
+        # results = service.users().labels().list(userId='me').execute()
